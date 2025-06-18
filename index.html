@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <audio id="move-sound" src="move_sound.mp3" preload="auto"></audio>
+    <audio id="win-sound" src="win_sound.mp3" preload="auto"></audio>
+    <audio id="tie-sound" src="tie_sound.mp3" preload="auto"></audio>
+    <audio id="loss-sound" src="lose_sound.mp3" preload="auto"></audio>
+    <style>
+        @font-face {
+            font-family: StayPixel;
+            src: url("StayPixelRegular-EaOxl.ttf");
+        }
+        body {
+            margin: auto;
+            background-color: #001f14ee;
+        }
+        main {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 20px 100px;
+            background-color: #0a5330ee;
+            border: transparent;
+            border-radius: 10px;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #2a2e31;
+            color: white;
+        }
+        button:hover {
+            background-color: #050505;
+        }
+        button#reset {
+            margin-bottom: 10px;
+        }
+        button#homescreen {
+            margin-left: 7px;
+        }
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #cccccc;
+            cursor: pointer;
+        }
+        .cell svg {
+            width: 50px;
+            height: 50px;
+        }
+        .cell.taken {
+            pointer-events: none;
+        }
+        .settings {
+            text-align: left;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        h1{
+            font-family: StayPixel;
+        }
+    </style>
+</head>
+<body>
+    <main>
+    <audio id="backgroundMusic" loop>
+        <source src="boterkaasenmemes-background-deuntje.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div id="home" class="container">
+        <h1>Boter Kaas & Memes</h1>
+        <div class="menu">
+            <button onclick="navigateTo('game')">Speel Game</button>
+            <button onclick="navigateTo('settings')">Instellingen</button>
+        </div>
+    </div>
+
+    <div id="game" class="container" style="display: none;">
+        <h1>Boter Kaas & Memes</h1>
+        <div class="game-board" id="board"></div>
+        <button id="reset" style="display: none;" onclick="resetGame()">Reset Game</button>
+        <button onclick="navigateTo('settings')">Instellingen</button>
+        <button onclick="navigateTo('home')">Terug naar Hoofdmenu</button>
+    </div>
+
+    <div id="settings" class="container" style="display: none;">
+        <h1>Instellingen</h1>
+        <div class="settings">
+            <label for="volume">Volume:</label>
+            <input type="range" id="volume" min="0" max="100" value="50" oninput="setVolume(this.value)">
+        </div>
+        <button onclick="navigateTo('home')">Terug naar Hoofdmenu</button>
+        <button onclick="navigateTo('game')">Naar de Game</button>
+    </div>
+
+    <script>
+        const home = document.getElementById('home');
+        const game = document.getElementById('game');
+        const settings = document.getElementById('settings');
+        const board = document.getElementById('board');
+        const resetButton = document.getElementById('reset');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const volumeSlider = document.getElementById('volume');
+
+        // Set initial volume
+        backgroundMusic.volume = volumeSlider.value / 100;
+
+        // Function to update volume
+        function setVolume(value) {
+            backgroundMusic.volume = value / 100;
+        }
+
+        const navigateTo = (page) => {
+            home.style.display = 'none';
+            game.style.display = 'none';
+            settings.style.display = 'none';
+
+            if (page === 'home') {
+                home.style.display = 'block';
+                backgroundMusic.pause();  // Stop music when going to the home menu
+                backgroundMusic.currentTime = 0; // Reset music
+            }
+
+            if (page === 'game') {
+                game.style.display = 'block';
+                backgroundMusic.play().catch(error => console.log("Music play error:", error)); // Start music
+            }
+
+            if (page === 'settings') {
+                settings.style.display = 'block';
+            }
+        };
+
+        // SVGs for X and O
+        const xSVG = `<svg width="100%" height="100%" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+            <rect id="Artboard1" x="0" y="0" width="256" height="256" style="fill:none;"/>
+            <g id="Artboard11" serif:id="Artboard1">
+                <path d="M119.064,128L23.32,32.256C20.854,29.79 20.854,25.786 23.32,23.32C25.786,20.854 29.79,20.854 32.256,23.32L128,119.064L223.744,23.32C226.21,20.854 230.214,20.854 232.68,23.32C235.146,25.786 235.146,29.79 232.68,32.256L136.936,128L232.68,223.744C235.146,226.21 235.146,230.214 232.68,232.68C230.214,235.146 226.21,235.146 223.744,232.68L128,136.936L32.256,232.68C29.79,235.146 25.786,235.146 23.32,232.68C20.854,230.214 20.854,226.21 23.32,223.744L119.064,128Z" style="fill:rgb(255,10,10);"/>
+            </g>
+        </svg>`;
+
+        const oSVG = `<svg width="100%" height="100%" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+            <rect id="Artboard1" x="0" y="0" width="256" height="256" style="fill:none;"/>
+            <g id="Artboard11" serif:id="Artboard1">
+                <circle cx="128" cy="128" r="106.529" style="fill:none;stroke:rgb(0,159,255);stroke-width:13.1px;"/>
+            </g>
+        </svg>`;
+
+        let boardState = Array(9).fill(null);
+        let isPlayerTurn = true;
+        let turnLocked = false; // Prevents fast clicking
+
+        const createBoard = () => {
+            board.innerHTML = '';
+            boardState.forEach((cell, index) => {
+                const cellElement = document.createElement('div');
+                cellElement.classList.add('cell');
+                cellElement.addEventListener('click', () => makeMove(index));
+                cellElement.innerHTML = cell || '';
+                board.appendChild(cellElement);
+            });
+        };
+
+        const makeMove = (index) => {
+            if (boardState[index] || checkWinner() || turnLocked) return; // Prevent move if game is over
+
+            const moveSound = document.getElementById('move-sound');
+            moveSound.play();
+
+            // Make the player's move (X or O)
+            boardState[index] = isPlayerTurn ? xSVG : oSVG;
+            isPlayerTurn = !isPlayerTurn;
+            createBoard();
+
+            const winner = checkWinner();  // Check for a winner
+            if (winner) {
+                // Play corresponding sound
+                const winSound = document.getElementById('win-sound');
+                const lossSound = document.getElementById('loss-sound');
+                const tieSound = document.getElementById('tie-sound');
+
+                if (winner === 'X') {
+                    alert("X wins!");
+                    winSound.play();
+                } else if (winner === 'O') {
+                    alert("O wins!");
+                    lossSound.play();
+                } else {
+                    alert("It's a tie!");
+                    tieSound.play();
+                }
+
+                resetButton.style.display = 'block';  // Show reset button
+                return; // Stop further moves after winner is declared
+            }
+
+            // If it's the computer's turn, make the AI move
+            if (!isPlayerTurn && !turnLocked) {
+                turnLocked = true;  // Lock input while AI moves
+                setTimeout(makeComputerMove, 500);  // AI makes a move after brief delay
+            }
+        };
+
+        const makeComputerMove = () => {
+            const winner = checkWinner();  // Check if the game is over before AI moves
+            if (winner) return;  // Don't allow AI to move if there's already a winner
+
+            // AI makes a move on an empty cell
+            const emptyCells = boardState.map((cell, index) => cell === null ? index : null).filter(index => index !== null);
+            if (emptyCells.length > 0) {
+                const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                boardState[randomIndex] = oSVG;  // AI plays as 'O'
+                isPlayerTurn = true;
+                createBoard();
+
+                const gameResult = checkWinner();  // Check if AI won after its move
+                if (gameResult) {
+                    const winSound = document.getElementById('win-sound');
+                    const lossSound = document.getElementById('loss-sound');
+                    const tieSound = document.getElementById('tie-sound');
+
+                    if (gameResult === 'tie') {
+                        alert("It's a tie!");
+                        tieSound.play();
+                    } else {
+                        alert(`${gameResult} wins!`);
+                        lossSound.play();
+                    }
+                    resetButton.style.display = 'block';  // Show reset button
+                }
+            }
+            turnLocked = false;  // Unlock input after AI move
+        };
+
+        const checkWinner = () => {
+            const winningCombos = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+                [0, 4, 8], [2, 4, 6]             // Diagonals
+            ];
+
+            for (const combo of winningCombos) {
+                const [a, b, c] = combo;
+                if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
+                    return boardState[a] === xSVG ? 'X' : 'O'; // Return winner
+                }
+            }
+
+            return boardState.includes(null) ? null : 'tie'; // Return 'tie' if no empty cells
+        };
+
+        const resetGame = () => {
+            boardState = Array(9).fill(null);
+            isPlayerTurn = true;
+            turnLocked = false; // Ensure input is unlocked on reset
+            resetButton.style.display = 'none'; // Hide reset button after reset
+            createBoard(); // Recreate the board for a new game
+        };
+
+        createBoard();
+    </script>
+    </main>
+</body>
+</html>
